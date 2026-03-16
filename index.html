@@ -669,7 +669,10 @@
             <h2 class="section-title">加入等待列表</h2>
             <p class="section-subtitle">Join the Waitlist</p>
 
-            <form class="waitlist-form" action="#" method="POST">
+            <form class="waitlist-form" action="https://api.web3forms.com/submit" method="POST" id="waitlistForm">
+                <input type="hidden" name="access_key" value="0594432c-2702-4f3b-860f-552d00a16d23">
+                <input type="hidden" name="subject" value="[MerkleClaw] 新等待列表申请">
+                <input type="hidden" name="from_name" value="MerkleClaw 官网">
                 <div class="form-group">
                     <label for="name">姓名 / Name *</label>
                     <input type="text" id="name" name="name" required>
@@ -766,11 +769,53 @@
             });
         });
 
-        // Form submission handler (placeholder)
-        document.querySelector('.waitlist-form').addEventListener('submit', function(e) {
+        // Form submission handler (Web3Forms)
+        document.getElementById('waitlistForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            alert('感谢您的申请！我们会尽快与您联系。\n\nThank you for your application! We will contact you soon.');
-            this.reset();
+            const form = this;
+            const submitBtn = form.querySelector('.submit-button');
+            const originalText = submitBtn.textContent;
+
+            // Disable button to prevent duplicate submissions
+            submitBtn.disabled = true;
+            submitBtn.textContent = '提交中...';
+            submitBtn.style.opacity = '0.7';
+            submitBtn.style.cursor = 'not-allowed';
+
+            try {
+                const formData = new FormData(form);
+                const res = await fetch('https://api.web3forms.com/submit', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    submitBtn.textContent = '✅ 提交成功！';
+                    submitBtn.style.background = '#10b981';
+                    submitBtn.style.opacity = '1';
+                    form.reset();
+                    setTimeout(() => {
+                        submitBtn.textContent = originalText;
+                        submitBtn.style.background = '';
+                        submitBtn.disabled = false;
+                        submitBtn.style.cursor = '';
+                    }, 3000);
+                } else {
+                    throw new Error(data.message || 'Submission failed');
+                }
+            } catch (err) {
+                submitBtn.textContent = '❌ 提交失败，请重试';
+                submitBtn.style.background = '#dc2626';
+                submitBtn.style.opacity = '1';
+                setTimeout(() => {
+                    submitBtn.textContent = originalText;
+                    submitBtn.style.background = '';
+                    submitBtn.disabled = false;
+                    submitBtn.style.cursor = '';
+                }, 3000);
+            }
         });
 
         // Intersection Observer for fade-in animations
